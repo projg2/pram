@@ -21,6 +21,8 @@ print_help() {
 	echo "Options:"
 	echo "  -r REPO, --repository REPO"
 	echo "                   GitHub repo to use (default: gentoo/gentoo)"
+	echo "  -s, --signoff    Add Signed-off-by to commits (the default)"
+	echo "  -S, --no-signoff Disable adding Signed-off-by to commits"
 	echo
 	echo "Parameters:"
 	echo "  <pr-number>      GitHub PR number"
@@ -30,6 +32,7 @@ print_help() {
 main() {
 	local prs=()
 	local repo=gentoo/gentoo
+	local signoff=1
 
 	while [[ ${#} -gt 0 ]]; do
 		case ${1} in
@@ -51,6 +54,12 @@ main() {
 				;;
 			--repository=*)
 				repo=${1#*=}
+				;;
+			-s|--signoff)
+				signoff=1
+				;;
+			-S|--no-signoff)
+				signoff=
 				;;
 			-*)
 				print_usage >&2
@@ -85,13 +94,14 @@ main() {
 		wget -O "${tempfile}" "${pr}.patch" || die "Fetching patch failed"
 
 		# TODO: verify every commit
-		if ! grep -q '^Signed-off-by:' "${tempfile}"; then
+		if [[ ${signoff} ]] && ! grep -q '^Signed-off-by:' "${tempfile}"
+		then
 			die "The patch was not signed off by the author!"
 		fi
 
 		${EDITOR:-vim} "${tempfile}" || die "Starting editor failed"
 
-		git am "${tempfile}" || die "git am failed"
+		git am ${signoff:+-s} "${tempfile}" || die "git am failed"
 	done
 }
 
