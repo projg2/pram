@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# (c) 2019 Michał Górny
+# Released under the terms of the 2-clause BSD license
+
+VERSION=0.9
+
+die() {
+	echo "${@}" >&2
+	exit 1
+}
+
+print_usage() {
+	echo "Usage: ${0} <pr-number/pr-url>..."
+}
+
+print_help() {
+	print_usage
+	echo
+	echo "Merge specified GitHub PR(s) into the repository in current directory."
+	echo
+	echo "Parameters:"
+	echo "  <pr-number>      GitHub PR number"
+	echo "  <pr-url>         Full URL to the pull request"
+}
+
+main() {
+	local prs=()
+
+	while [[ ${#} -gt 0 ]]; do
+		case ${1} in
+			-h|--help)
+				print_help
+				exit 0
+				;;
+			-V|--version)
+				echo "pram ${VERSION}"
+				exit 0
+				;;
+			-*)
+				print_usage >&2
+				exit 1
+				;;
+			*://*) # full URL (possibly with .patch suffix)
+				prs+=( "${1%.patch}" )
+				;;
+			[0-9]*) # a number?
+				prs+=( "https://github.com/gentoo/gentoo/pull/${1}" )
+				;;
+		esac
+
+		shift
+	done
+
+	if [[ -z ${prs[@]} ]]; then
+		print_usage >&2
+		exit 1
+	fi
+
+	if [[ $(git rev-parse --is-inside-work-tree) != true ]]; then
+		echo "pram needs to be run inside the git checkout!" >&2
+		exit 1
+	fi
+
+	tempfile=$(mktemp) || die "Unable to create a temporary file"
+	trap 'rm -f "${tempfile}"' EXIT
+
+	local pr
+	for pr in "${prs[@]}"; do
+		wget -O "${tempfile}" "${pr}.patch" || die "Fetching patch failed"
+
+		# TODO: verify every commit
+		if ! grep -q '^Signed-off-by:' "${tempfile}"; then
+			die "The patch was not signed off by the author!"
+		fi
+
+		${EDITOR:-vim} "${tempfile}" || die "Starting editor failed"
+
+		git am "${tempfile}" || die "git am failed"
+	done
+}
+
+main "${@}"
