@@ -19,6 +19,8 @@ print_help() {
 	echo "Merge specified GitHub PR(s) into the repository in current directory."
 	echo
 	echo "Options:"
+	echo "  -e EDITOR, --editor EDITOR"
+	echo "                   Override the editor used (default: \${EDITOR})"
 	echo "  -r REPO, --repository REPO"
 	echo "                   GitHub repo to use (default: gentoo/gentoo)"
 	echo "  -s, --signoff    Add Signed-off-by to commits (the default)"
@@ -30,6 +32,7 @@ print_help() {
 }
 
 main() {
+	local editor=${EDITOR:-vim}
 	local prs=()
 	local repo=gentoo/gentoo
 	local signoff=1
@@ -43,6 +46,17 @@ main() {
 			-V|--version)
 				echo "pram ${VERSION}"
 				exit 0
+				;;
+			-e|--editor)
+				[[ ${#} -gt 1 ]] || die "${0}: missing argument to ${1}"
+				editor=${2}
+				shift
+				;;
+			-e*)
+				editor=${1#-e}
+				;;
+			--editor=*)
+				editor=${1#*=}
 				;;
 			-r|--repository)
 				[[ ${#} -gt 1 ]] || die "${0}: missing argument to ${1}"
@@ -99,7 +113,7 @@ main() {
 			die "The patch was not signed off by the author!"
 		fi
 
-		${EDITOR:-vim} "${tempfile}" || die "Starting editor failed"
+		${editor} "${tempfile}" || die "Starting editor failed"
 
 		git am ${signoff:+-s} "${tempfile}" || die "git am failed"
 	done
