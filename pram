@@ -100,22 +100,22 @@ main() {
 		exit 1
 	fi
 
-	tempfile=$(mktemp) || die "Unable to create a temporary file"
-	trap 'rm -f "${tempfile}"' EXIT
+	tempdir=$(mktemp -d) || die "Unable to create a temporary directory"
+	trap 'rm -r -f "${tempdir}"' EXIT
 
 	local pr
 	for pr in "${prs[@]}"; do
-		wget -O "${tempfile}" "${pr}.patch" || die "Fetching patch failed"
+		wget -O "${tempdir}/all.patch" "${pr}.patch" || die "Fetching patch failed"
 
 		# TODO: verify every commit
-		if [[ ${signoff} ]] && ! grep -q '^Signed-off-by:' "${tempfile}"
+		if [[ ${signoff} ]] && ! grep -q '^Signed-off-by:' "${tempdir}/all.patch"
 		then
 			die "The patch was not signed off by the author!"
 		fi
 
-		${editor} "${tempfile}" || die "Starting editor failed"
+		${editor} "${tempdir}/all.patch" || die "Starting editor failed"
 
-		git am ${signoff:+-s} "${tempfile}" || die "git am failed"
+		git am ${signoff:+-s} "${tempdir}/all.patch" || die "git am failed"
 	done
 }
 
