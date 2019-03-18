@@ -181,6 +181,11 @@ main() {
 
 		${editor} "${tempdir}/all.patch" || die "Starting editor failed"
 
+		if [[ ! -s ${tempdir}/all.patch ]]; then
+			echo "Patch is empty now, skipping." >&2
+			continue
+		fi
+
 		git am ${signoff:+-s} "${tempdir}/all.patch" || die "git am failed"
 	done
 }
