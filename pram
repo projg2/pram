@@ -10,13 +10,17 @@ die() {
 }
 
 print_usage() {
-	echo "Usage: ${0} <pr-number/pr-url>..."
+	echo "Usage: ${0} [<options>] <pr-number/pr-url>..."
 }
 
 print_help() {
 	print_usage
 	echo
 	echo "Merge specified GitHub PR(s) into the repository in current directory."
+	echo
+	echo "Options:"
+	echo "  -r REPO, --repository REPO"
+	echo "                   GitHub repo to use (default: gentoo/gentoo)"
 	echo
 	echo "Parameters:"
 	echo "  <pr-number>      GitHub PR number"
@@ -25,6 +29,7 @@ print_help() {
 
 main() {
 	local prs=()
+	local repo=gentoo/gentoo
 
 	while [[ ${#} -gt 0 ]]; do
 		case ${1} in
@@ -36,6 +41,17 @@ main() {
 				echo "pram ${VERSION}"
 				exit 0
 				;;
+			-r|--repository)
+				[[ ${#} -gt 1 ]] || die "${0}: missing argument to ${1}"
+				repo=${2}
+				shift
+				;;
+			-r*)
+				repo=${1#-r}
+				;;
+			--repository=*)
+				repo=${1#*=}
+				;;
 			-*)
 				print_usage >&2
 				exit 1
@@ -44,7 +60,7 @@ main() {
 				prs+=( "${1%.patch}" )
 				;;
 			[0-9]*) # a number?
-				prs+=( "https://github.com/gentoo/gentoo/pull/${1}" )
+				prs+=( "https://github.com/${repo}/pull/${1}" )
 				;;
 		esac
 
