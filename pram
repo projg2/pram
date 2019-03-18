@@ -106,11 +106,16 @@ main() {
 	local pr
 	for pr in "${prs[@]}"; do
 		wget -O "${tempdir}/all.patch" "${pr}.patch" || die "Fetching patch failed"
+		git mailsplit -o"${tempdir}" "${tempdir}/all.patch" >/dev/null ||
+			die "Splitting patches failed"
 
-		# TODO: verify every commit
-		if [[ ${signoff} ]] && ! grep -q '^Signed-off-by:' "${tempdir}/all.patch"
-		then
-			die "The patch was not signed off by the author!"
+		if [[ ${signoff} ]]; then
+			local f
+			for f in "${tempdir}"/[0-9]*; do
+				if ! grep -q '^Signed-off-by:' "${f}"; then
+					die "Commit no. ${f##*/} was not signed off by the author!"
+				fi
+			done
 		fi
 
 		${editor} "${tempdir}/all.patch" || die "Starting editor failed"
