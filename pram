@@ -19,6 +19,10 @@ print_help() {
 	echo "Merge specified GitHub PR(s) into the repository in current directory."
 	echo
 	echo "Options:"
+	echo "  -b BUG, --bug BUG"
+	echo "  -c BUG, --closes BUG"
+	echo "                   Reference or close the specific bug, takes either"
+	echo "                   a bug number or URL, can be specified multiple times"
 	echo "  -e EDITOR, --editor EDITOR"
 	echo "                   Override the editor used (default: \${EDITOR})"
 	echo "  -r REPO, --repository REPO"
@@ -44,6 +48,8 @@ main() {
 	# make sure files are sorted ascending
 	local -x LC_COLLATE=C
 
+	local bug=()
+	local closes=()
 	local editor=${EDITOR:-vim}
 	local prs=()
 	local repo=gentoo/gentoo
@@ -58,6 +64,29 @@ main() {
 			-V|--version)
 				echo "pram ${VERSION}"
 				exit 0
+				;;
+
+			-b|--bug)
+				[[ ${#} -gt 1 ]] || die "${0}: missing argument to ${1}"
+				bug+=( "${2}" )
+				shift
+				;;
+			-b*)
+				bug+=( "${1#-b}" )
+				;;
+			--bug=*)
+				bug+=( "${1#*=}" )
+				;;
+			-c|--closes)
+				[[ ${#} -gt 1 ]] || die "${0}: missing argument to ${1}"
+				closes+=( "${2}" )
+				shift
+				;;
+			-c*)
+				closes+=( "${1#-c}" )
+				;;
+			--closes=*)
+				closes+=( "${1#*=}" )
 				;;
 			-e|--editor)
 				[[ ${#} -gt 1 ]] || die "${0}: missing argument to ${1}"
@@ -131,6 +160,16 @@ main() {
 			done
 		fi
 
+		# append bug references
+		local b
+		for b in "${bug[@]}"; do
+			[[ ${b} != *://* ]] && b=https://bugs.gentoo.org/${b}
+			add_trailer "${patches[-1]}" "Bug: ${b}"
+		done
+		for b in "${closes[@]}"; do
+			[[ ${b} != *://* ]] && b=https://bugs.gentoo.org/${b}
+			add_trailer "${patches[-1]}" "Closes: ${b}"
+		done
 		# append Closes: to the final commit if missing
 		if ! grep -q "^Closes: ${pr}" "${patches[-1]}"; then
 			add_trailer "${patches[-1]}" "Closes: ${pr}"
