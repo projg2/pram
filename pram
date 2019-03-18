@@ -10,7 +10,7 @@ die() {
 }
 
 print_usage() {
-	echo "Usage: ${0} [<options>] <pr-number/pr-url>..."
+	echo "Usage: ${0} [<options>] <pr-number|pr-url|patch-url>..."
 }
 
 print_help() {
@@ -33,6 +33,7 @@ print_help() {
 	echo "Parameters:"
 	echo "  <pr-number>      GitHub PR number"
 	echo "  <pr-url>         Full URL to the pull request"
+	echo "  <patch-url>      URL to a patch file"
 }
 
 # add_trailer <file> <line-to-add>
@@ -120,11 +121,8 @@ main() {
 				print_usage >&2
 				exit 1
 				;;
-			*://*) # full URL (possibly with .patch suffix)
-				prs+=( "${1%.patch}" )
-				;;
-			[0-9]*) # a number?
-				prs+=( "https://github.com/${repo}/pull/${1}" )
+			*)
+				prs+=( "${1}" )
 				;;
 		esac
 
@@ -144,9 +142,35 @@ main() {
 	tempdir=$(mktemp -d) || die "Unable to create a temporary directory"
 	trap 'rm -r -f "${tempdir}"' EXIT
 
-	local pr
+	local pr to_close
 	for pr in "${prs[@]}"; do
-		wget -O "${tempdir}/all.patch" "${pr}.patch" || die "Fetching patch failed"
+		case ${pr} in
+			*://github.com/*/*/pull/*)
+				# GitHub URL
+				to_close=${pr%.patch}
+				pr=${to_close}.patch
+				;;
+			*://*)
+				# arbitrary URL
+				to_close=
+				;;
+			[0-9]*)
+				# a number?
+				to_close="https://github.com/${repo}/pull/${pr}"
+				pr=${to_close}.patch
+				;;
+			*)
+				# a local file maybe?
+				to_close=
+				[[ -f ${pr} ]] ||
+					die "Parameter neither an URL, number or file: ${pr}"
+				cp "${pr}" "${tempdir}"/all.patch || die "Copying patch failed"
+				pr=
+				;;
+		esac
+		if [[ -n ${pr} ]]; then
+			wget -O "${tempdir}/all.patch" "${pr}" || die "Fetching patch failed"
+		fi
 		git mailsplit -o"${tempdir}" "${tempdir}/all.patch" >/dev/null ||
 			die "Splitting patches failed"
 
@@ -171,8 +195,10 @@ main() {
 			add_trailer "${patches[-1]}" "Closes: ${b}"
 		done
 		# append Closes: to the final commit if missing
-		if ! grep -q "^Closes: ${pr}" "${patches[-1]}"; then
-			add_trailer "${patches[-1]}" "Closes: ${pr}"
+		if [[ -n ${to_close} ]]; then
+			if ! grep -q "^Closes: ${to_close}" "${patches[-1]}"; then
+				add_trailer "${patches[-1]}" "Closes: ${to_close}"
+			fi
 		fi
 
 		# concatenate the patches back
