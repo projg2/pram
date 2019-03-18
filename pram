@@ -31,7 +31,19 @@ print_help() {
 	echo "  <pr-url>         Full URL to the pull request"
 }
 
+# add_trailer <file> <line-to-add>
+add_trailer() {
+	local file=${1}
+	local line=${2}
+
+	sed -i -e "1,/^---$/s@^---\$@${line}\n\0@" "${file}" ||
+		die "Appending trailer via sed failed"
+}
+
 main() {
+	# make sure files are sorted ascending
+	local -x LC_COLLATE=C
+
 	local editor=${EDITOR:-vim}
 	local prs=()
 	local repo=gentoo/gentoo
@@ -109,14 +121,24 @@ main() {
 		git mailsplit -o"${tempdir}" "${tempdir}/all.patch" >/dev/null ||
 			die "Splitting patches failed"
 
+		local patches=( "${tempdir}"/[0-9]* )
 		if [[ ${signoff} ]]; then
 			local f
-			for f in "${tempdir}"/[0-9]*; do
+			for f in "${patches}"; do
 				if ! grep -q '^Signed-off-by:' "${f}"; then
 					die "Commit no. ${f##*/} was not signed off by the author!"
 				fi
 			done
 		fi
+
+		# append Closes: to the final commit if missing
+		if ! grep -q "^Closes: ${pr}" "${patches[-1]}"; then
+			add_trailer "${patches[-1]}" "Closes: ${pr}"
+		fi
+
+		# concatenate the patches back
+		cat "${patches[@]}" > "${tempdir}/all.patch" ||
+			die "Concatenating patches failed"
 
 		${editor} "${tempdir}/all.patch" || die "Starting editor failed"
 
