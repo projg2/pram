@@ -150,6 +150,12 @@ main() {
 				to_close=${pr%.patch}
 				pr=${to_close}.patch
 				;;
+			*://*.bugs.gentoo.org/attachment.cgi?*)
+				# Gentoo Bugzilla attachment
+				# (get bug no from domain name)
+				to_close=${pr%%.bugs*}
+				to_close="https://bugs.gentoo.org/${to_close#*://}"
+				;;
 			*://*)
 				# arbitrary URL
 				to_close=
