@@ -1,0 +1,45 @@
+.TH PRAM 1 "Mar 20, 2019" "pram 1"
+
+.SH NAME
+PRam \- Tool to ease merging Pull Requests and git patches
+
+.SH SYNOPSIS
+.B pram
+[\fI<options>\fP] \fI<pr-number|pr-url|patch-url>\fP...
+
+.SH DESCRIPTION
+Merge specified GitHub PR(s) into the repository in current directory.
+
+.SH OPTIONS
+.TP
+\fB\-b\fR \fIBUG\fP, \fB\-\-bug\fR \fIBUG\fP, \fB\-c\fR \fIBUG\fP, \fB\-\-closes\fR \fIBUG\fP
+Reference or close the specific bug, takes either a bug number or URL, can be
+specified multiple times.
+.TP
+\fB\-e\fR \fIEDITOR\fP, \fB\-\-editor\fP \fIEDITOR\fP
+Override the editor used (default: ${EDITOR})
+.TP
+\fB\-r\fR \fIREPO\fR, \fB\-\-repository\fR \fIREPO\fP
+GitHub repo to use (default: gentoo/gentoo)
+.TP
+\fB\-s\fR, \fB\-\-signoff\fR
+Add Signed-off-by to commits (the default)
+.TP
+\fB-S\fR, \fB\-\-no\-signoff\fR
+Disable adding Signed-off-by to commits
+
+.SH PARAMETERS
+.IP \fI<pr-number>\fP
+GitHub PR number
+.IP \fI<pr-url>\fP
+Full URL to the pull request
+.IP \fI<patch-url>\fP
+URL to a patch file
+
+.SH LICENSE
+.B PRam
+is released under the terms of 2-clause BSD license.
+
+.SH AUTHOR
+.B PRam
+was written by Michał Górny <mgorny@gentoo.org>
