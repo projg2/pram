@@ -25,6 +25,8 @@ print_help() {
 	echo "                   a bug number or URL, can be specified multiple times"
 	echo "  -e EDITOR, --editor EDITOR"
 	echo "                   Override the editor used (default: \${EDITOR})"
+	echo "  -I, --non-interactive"
+	echo "                   Do not interactively ask to merge, just do it"
 	echo "  -r REPO, --repository REPO"
 	echo "                   GitHub repo to use (default: gentoo/gentoo)"
 	echo "  -s, --signoff    Add Signed-off-by to commits (the default)"
@@ -55,6 +57,7 @@ main() {
 	local prs=()
 	local repo=gentoo/gentoo
 	local signoff=1
+	local interactive=1
 
 	while [[ ${#} -gt 0 ]]; do
 		case ${1} in
@@ -99,6 +102,9 @@ main() {
 				;;
 			--editor=*)
 				editor=${1#*=}
+				;;
+			-I|--non-interactive)
+				interactive=
 				;;
 			-r|--repository)
 				[[ ${#} -gt 1 ]] || die "${0}: missing argument to ${1}"
@@ -218,6 +224,21 @@ main() {
 			continue
 		fi
 
+		if [[ ${interactive} ]]; then
+			local answer
+			read -p "Do you want to merge this? (Y/n/q) " answer
+			case ${answer,,} in
+				y|"")
+					;;
+				q)
+					return 0
+					;;
+				*)
+					echo "This merge has been skipped!"
+					continue
+					;;
+			esac
+		fi
 		git am ${signoff:+-s} "${tempdir}/all.patch" || die "git am failed"
 	done
 }
