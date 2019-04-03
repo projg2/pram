@@ -25,6 +25,8 @@ print_help() {
 	echo "                   a bug number or URL, can be specified multiple times"
 	echo "  -e EDITOR, --editor EDITOR"
 	echo "                   Override the editor used (default: \${EDITOR})"
+	echo "  -G, --no-gpgsign"
+	echo "                   Do not automatically GPG-sign commits"
 	echo "  -I, --non-interactive"
 	echo "                   Do not interactively ask to merge, just do it"
 	echo "  -r REPO, --repository REPO"
@@ -58,6 +60,7 @@ main() {
 	local repo=gentoo/gentoo
 	local signoff=1
 	local interactive=1
+	local gpgsign=1
 
 	while [[ ${#} -gt 0 ]]; do
 		case ${1} in
@@ -102,6 +105,9 @@ main() {
 				;;
 			--editor=*)
 				editor=${1#*=}
+				;;
+			-G|--no-gpgsign)
+				gpgsign=
 				;;
 			-I|--non-interactive)
 				interactive=
@@ -239,7 +245,7 @@ main() {
 					;;
 			esac
 		fi
-		git am ${signoff:+-s} "${tempdir}/all.patch" || die "git am failed"
+		git am ${signoff:+-s} ${gpgsign:+-S} "${tempdir}/all.patch" || die "git am failed"
 	done
 }
 
