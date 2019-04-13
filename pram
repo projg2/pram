@@ -19,6 +19,8 @@ print_help() {
 	echo "Merge specified GitHub PR(s) into the repository in current directory."
 	echo
 	echo "Options:"
+	echo "  --am-options OPTIONS"
+	echo "                   Pass additional OPTIONS to git am"
 	echo "  -b BUG, --bug BUG"
 	echo "  -c BUG, --closes BUG"
 	echo "                   Reference or close the specific bug, takes either"
@@ -53,6 +55,7 @@ main() {
 	# make sure files are sorted ascending
 	local -x LC_COLLATE=C
 
+	local am_options=()
 	local bug=()
 	local closes=()
 	local editor=${EDITOR:-vim}
@@ -73,6 +76,14 @@ main() {
 				exit 0
 				;;
 
+			--am-options)
+				[[ ${#} -gt 1 ]] || die "${0}: missing argument to ${1}"
+				am_options+=( "${2}" )
+				shift
+				;;
+			--am-options=*)
+				am_options+=( "${1#*=}" )
+				;;
 			-b|--bug)
 				[[ ${#} -gt 1 ]] || die "${0}: missing argument to ${1}"
 				bug+=( "${2}" )
@@ -251,7 +262,8 @@ main() {
 				esac
 			done
 		fi
-		git am ${signoff:+-s} ${gpgsign:+-S} "${tempdir}/all.patch" || die "git am failed"
+		git am ${signoff:+-s} ${gpgsign:+-S} "${am_options[@]}" \
+			"${tempdir}/all.patch" || die "git am failed"
 	done
 }
 
