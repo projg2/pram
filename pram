@@ -233,6 +233,7 @@ main() {
 		# concatenate the patches back
 		cat "${patches[@]}" > "${tempdir}/all.patch" ||
 			die "Concatenating patches failed"
+		rm "${patches[@]}" || die "Split patch cleanup failed"
 
 		${editor} "${tempdir}/all.patch" || die "Starting editor failed"
 
