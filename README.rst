@@ -1,9 +1,9 @@
-==============
-PRam Unbloated
-==============
+====
+PRam
+====
 
-PRam Unbloated is an enhanced rewrite of Patrice Clement's pram utility
-in bash [#CLEMENT-PRAM]_.  It is a tool to ease merging of pull requests
+This is an enhanced rewrite of Patrice Clement's pram utility, in bash
+[#CLEMENT-PRAM]_.  It is a tool to ease merging of pull requests
 and git format patches to ebuild repositories.  It incorporates
 the requirements of Gentoo policies and reduces the necessity
 of manually updating commit messages [#GLEP66]_ [#GLEP76]_.
