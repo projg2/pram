@@ -14,6 +14,14 @@ add_test(
 	NAME basic
 	COMMAND sh 00basic.sh
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test)
+add_test(
+	NAME signoff-missing
+	COMMAND sh 01signoff-missing.sh
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test)
+add_test(
+	NAME signoff-present
+	COMMAND sh 01signoff-present.sh
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test)
 
 install(
 	FILES pram
