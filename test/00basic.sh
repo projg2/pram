@@ -3,30 +3,7 @@
 
 set -e -x
 
-INITDIR=${PWD}
-TMPDIR=$(mktemp -d)
-trap 'rm -r -f "${TMPDIR}"' EXIT
-
-# Use predefined timestamp to get reproducible repo.
-export GIT_AUTHOR_DATE='2000-01-01 00:00:00Z'
-export GIT_COMMITTER_DATE='2000-01-01 00:00:00Z'
-
-cd "${TMPDIR}"
-git init
-git config --local user.name 'PRam test'
-git config --local user.email 'pram@example.com'
-cat > data.txt <<-EOF
-	This is some initial data.
-
-	001100
-	010010
-	011110
-	100001
-	101101
-	110011
-EOF
-git add data.txt
-git commit -m 'Initial commit'
+. ./common-setup.sh
 
 cat > trivial.patch <<-EOF
 	From 88460bc61f56546da478dc6fd4682e7c62cc6c80 Mon Sep 17 00:00:00 2001
@@ -69,7 +46,7 @@ EOF
 bash "${INITDIR}"/../pram -e true -G -I -S ./trivial.patch
 
 git log --format='%ae%n%an%n%aI%n%B' -1 > git-log.txt
-cmp git-log.txt - <<-EOF
+diff -u - git-log.txt <<-EOF
 	pram@example.com
 	PRam test
 	2000-01-01T00:00:00+00:00
