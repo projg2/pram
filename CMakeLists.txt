@@ -8,6 +8,13 @@ project(pram
 set(CMAKE_INSTALL_LIBDIR lib)
 include(GNUInstallDirs)
 
+# Add tests.
+enable_testing()
+add_test(
+	NAME basic
+	COMMAND sh 00basic.sh
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test)
+
 install(
 	FILES pram
 	DESTINATION ${CMAKE_INSTALL_BINDIR})
