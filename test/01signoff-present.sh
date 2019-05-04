@@ -1,5 +1,5 @@
 #!/bin/sh
-# Test whether applying a plain patch via pram works.
+# Test whether signoff is properly verified and another one appended.
 
 set -e -x
 

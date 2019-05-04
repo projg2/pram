@@ -1,5 +1,5 @@
 #!/bin/sh
-# Test whether applying a plain patch via pram works.
+# Test whether missing signoff causes rejection.
 
 set -e -x
 
