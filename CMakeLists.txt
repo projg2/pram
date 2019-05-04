@@ -21,6 +21,8 @@ set(TESTS
 	03bug-multiple
 	03closes-multiple
 	03combined-bug-closes
+	04interactive-no
+	04interactive-yes
 )
 foreach(t ${TESTS})
 	add_test(
