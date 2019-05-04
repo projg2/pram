@@ -23,6 +23,8 @@ set(TESTS
 	03combined-bug-closes
 	04interactive-no
 	04interactive-yes
+	05editor-empty
+	05editor-fail
 )
 foreach(t ${TESTS})
 	add_test(
