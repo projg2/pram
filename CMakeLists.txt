@@ -27,6 +27,8 @@ set(TESTS
 	05editor-empty
 	05editor-fail
 	06gpgsign
+	10threeway
+	10threeway-disabled
 )
 foreach(t ${TESTS})
 	add_test(
