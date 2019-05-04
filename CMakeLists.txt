@@ -21,6 +21,7 @@ set(TESTS
 	03bug-multiple
 	03closes-multiple
 	03combined-bug-closes
+	03combined-signoff-bug
 	04interactive-no
 	04interactive-yes
 	05editor-empty
