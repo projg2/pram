@@ -10,18 +10,24 @@ include(GNUInstallDirs)
 
 # Add tests.
 enable_testing()
-add_test(
-	NAME basic
-	COMMAND sh 00basic.sh
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test)
-add_test(
-	NAME signoff-missing
-	COMMAND sh 01signoff-missing.sh
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test)
-add_test(
-	NAME signoff-present
-	COMMAND sh 01signoff-present.sh
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test)
+set(TESTS
+	00basic
+	01signoff-missing
+	01signoff-present
+	02bug-number
+	02bug-url
+	02closes-number
+	02closes-url
+	03bug-multiple
+	03closes-multiple
+	03combined-bug-closes
+)
+foreach(t ${TESTS})
+	add_test(
+		NAME "${t}"
+		COMMAND sh "${t}.sh"
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test)
+endforeach(t ${TESTS})
 
 install(
 	FILES pram
