@@ -32,6 +32,9 @@ foreach(t ${TESTS})
 		NAME "${t}"
 		COMMAND sh "${t}.sh"
 		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test)
+	set_tests_properties("${t}"
+		PROPERTIES
+		SKIP_RETURN_CODE 126)
 endforeach(t ${TESTS})
 
 install(
