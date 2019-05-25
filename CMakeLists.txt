@@ -41,7 +41,7 @@ foreach(t ${TESTS})
 endforeach(t ${TESTS})
 
 install(
-	FILES pram
+	PROGRAMS pram
 	DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(
 	FILES pram.1
