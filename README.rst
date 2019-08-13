@@ -44,7 +44,7 @@ the ``--repository`` option to override the remote GitHub repository
 or specify a full PR URL::
 
     pram -r foo/gentoo 123
-	pram https://github.com/foo/gentoo/pull/123
+    pram https://github.com/foo/gentoo/pull/123
 
 If your repository does not use DCO/GCO, you can use ``--no-signoff``
 option to disable requiring sign-off.
