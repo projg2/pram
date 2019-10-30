@@ -43,7 +43,7 @@ cat > trivial.patch <<-EOF
 	2.21.0
 EOF
 
-echo 'y' | bash "${INITDIR}"/../pram -e true -G -S ./trivial.patch
+echo 'y' | bash "${INITDIR}"/../pram --no-gitconfig -e true -G -S ./trivial.patch
 
 git log --format='%ae%n%an%n%aI%n%B' -1 > git-log.txt
 diff -u - git-log.txt <<-EOF
