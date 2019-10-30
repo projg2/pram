@@ -27,6 +27,7 @@ print_help() {
 	echo "                   a bug number or URL, can be specified multiple times"
 	echo "  -e EDITOR, --editor EDITOR"
 	echo "                   Override the editor used (default: \${EDITOR})"
+	echo "  --no-gitconfig   Do not query options via git config"
 	echo "  -G, --no-gpgsign"
 	echo "                   Do not automatically GPG-sign commits"
 	echo "  -I, --non-interactive"
@@ -40,6 +41,10 @@ print_help() {
 	echo "  <pr-number>      GitHub PR number"
 	echo "  <pr-url>         Full URL to the pull request"
 	echo "  <patch-url>      URL to a patch file"
+	echo
+	echo "Some options can be specified via 'git config' as well:"
+	echo "  string options: pram.editor, pram.repo"
+	echo "  boolean options: pram.gpgsign, pram.interactive, pram.signoff"
 }
 
 # add_trailer <file> <line-to-add>
@@ -58,12 +63,13 @@ main() {
 	local am_options=()
 	local bug=()
 	local closes=()
-	local editor=${EDITOR:-vim}
+	local editor=
 	local prs=()
-	local repo=gentoo/gentoo
-	local signoff=1
-	local interactive=1
-	local gpgsign=1
+	local repo=
+	local signoff=def
+	local interactive=def
+	local gitconfig=1
+	local gpgsign=def
 
 	while [[ ${#} -gt 0 ]]; do
 		case ${1} in
@@ -117,6 +123,9 @@ main() {
 			--editor=*)
 				editor=${1#*=}
 				;;
+			--no-gitconfig)
+				gitconfig=
+				;;
 			-G|--no-gpgsign)
 				gpgsign=
 				;;
@@ -161,6 +170,35 @@ main() {
 		echo "pram needs to be run inside the git checkout!" >&2
 		exit 1
 	fi
+
+	if [[ ${gitconfig} ]]; then
+		local opt
+
+		# string options
+		[[ -z ${repo} ]] && repo=$(git config --get pram.repo)
+		[[ -z ${editor} ]] && editor=$(git config --get pram.editor)
+
+		# boolean options
+		if [[ ${signoff} == def ]]; then
+			opt=$(git config --type bool --get pram.signoff)
+			[[ ${opt} == true ]] && signoff=1
+			[[ ${opt} == false ]] && signoff=
+		fi
+		if [[ ${interactive} == def ]]; then
+			opt=$(git config --type bool --get pram.interactive)
+			[[ ${opt} == true ]] && interactive=1
+			[[ ${opt} == false ]] && interactive=
+		fi
+		if [[ ${gpgsign} == def ]]; then
+			opt=$(git config --type bool --get pram.gpgsign)
+			[[ ${opt} == true ]] && gpgsign=1
+			[[ ${opt} == false ]] && gpgsign=
+		fi
+	fi
+
+	# set defaults
+	: "${repo:=gentoo/gentoo}"
+	: "${editor:=${EDITOR:-vim}}"
 
 	tempdir=$(mktemp -d) || die "Unable to create a temporary directory"
 	trap 'rm -r -f "${tempdir}"' EXIT

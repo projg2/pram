@@ -22,6 +22,9 @@ specified multiple times.
 \fB\-e\fR \fIEDITOR\fP, \fB\-\-editor\fP \fIEDITOR\fP
 Override the editor used (default: ${EDITOR})
 .TP
+\fB\-\-no\-gitconfig\fR
+Do not query options via git config.
+.TP
 \fB\-G\fR, \fB\-\-no\-gpgsign\fR
 Do not automatically GPG-sign commits
 .TP
@@ -44,6 +47,20 @@ GitHub PR number
 Full URL to the pull request
 .IP \fI<patch-url>\fP
 URL to a patch file
+
+.SH GIT CONFIG SUPPORT
+PRam queries configuration via \fBgit config\fR by default.  It makes it
+possible to specify additional options globally via \fB~/.gitconfig\fR
+and per-repo via \fB.git/config\fR.  Command-line options override configuration
+files.
+
+The following options are currently supported:
+.TP
+string options:
+\fIpram.editor\fR, \fIpram.repository\fR
+.TP
+boolean options (\fB--type bool\fR):
+\fIpram.gpgsign\fR, \fIpram.interactive\fR, \fIpram.signoff\fR
 
 .SH LICENSE
 .B PRam
