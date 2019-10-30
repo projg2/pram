@@ -2,7 +2,7 @@
 # (c) 2019 Michał Górny
 # Released under the terms of the 2-clause BSD license
 
-VERSION=7
+VERSION=8
 
 die() {
 	echo "${@}" >&2
