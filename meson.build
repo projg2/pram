@@ -1,5 +1,5 @@
 project('pram',
-  version: '5',
+  version: '9',
   license: 'BSD-2',
   meson_version: '>=0.49.0')
 
