@@ -37,7 +37,7 @@ foreach(t ${TESTS})
 		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test)
 	set_tests_properties("${t}"
 		PROPERTIES
-		SKIP_RETURN_CODE 126)
+		SKIP_RETURN_CODE 77)
 endforeach(t ${TESTS})
 
 install(

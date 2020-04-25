@@ -8,7 +8,7 @@ set -e -x
 # Generate a temporary key.
 export GNUPGHOME=${TMPDIR}/gpg
 mkdir "${GNUPGHOME}"
-gpg --batch --passphrase '' --quick-generate-key 'PRam test <pram@example.com>' || exit 126
+gpg --batch --passphrase '' --quick-generate-key 'PRam test <pram@example.com>' || exit 77
 git config --local user.signingkey pram@example.com
 
 cat > trivial.patch <<-EOF
