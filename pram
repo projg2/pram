@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# (c) 2019 Michał Górny
+# (c) 2019-2021 Michał Górny
 # Released under the terms of the 2-clause BSD license
 
-VERSION=9
+VERSION=10
 
 die() {
 	echo "${@}" >&2
