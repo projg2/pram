@@ -38,7 +38,7 @@ cat > trivial.patch <<-EOF
 	--- /dev/null
 	+++ b/newfile.txt
 	@@ -0,0 +1 @@
-	+Also, a new file.
+	+Also, a new file with CRLF line ending.
 	--
 	2.21.0
 EOF
@@ -55,5 +55,5 @@ diff -u - git-log.txt <<-EOF
 EOF
 sha1sum -c <<EOF
 8054584c7b1fa9b5bdd7ee1177e78c99ea2cce04  data.txt
-810ded956f70861874e2c6083c5dc9e9e80f1808  newfile.txt
+f83370dac2432114808711e29f399f9b0c87fc23  newfile.txt
 EOF
