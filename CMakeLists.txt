@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 project(pram
-	VERSION 10
+	VERSION 11
 	LANGUAGES NONE)
 
 # Silence the warning about not having a compiler -- we are not using
