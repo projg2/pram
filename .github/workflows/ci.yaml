@@ -1,0 +1,21 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install deps
+        run: sudo apt install -y meson
+      - name: Build new git, sigh
+        run: |
+          wget https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.45.0.tar.xz
+          tar -xJf git-2.45.0.tar.xz
+          cd git-2.45.0
+          make -j$(nproc) NO_CURL=1 NO_GETTEXT=1
+          sudo make install NO_CURL=1 NO_GETTEXT=1 prefix=/usr/local
+      - name: Configure
+        run: meson setup build
+      - name: Test
+        run: meson test -C build --print-errorlogs
