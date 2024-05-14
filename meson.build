@@ -1,6 +1,6 @@
 project('pram',
   version: '10',
-  license: 'BSD-2',
+  license: 'GPL-2.0-or-later',
   meson_version: '>=0.49.0')
 
 install_data('pram',
