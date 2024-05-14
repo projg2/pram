@@ -55,7 +55,7 @@ git log --format='%ae%n%an%n%aI%n%G?%n%B' -1 > git-log.txt
 diff -u - git-log.txt <<-EOF
 	pram@example.com
 	PRam test
-	2000-01-01T00:00:00+00:00
+	2000-01-01T00:00:00Z
 	G
 	A trivial patch
 

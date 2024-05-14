@@ -49,7 +49,7 @@ git log --format='%ae%n%an%n%aI%n%B' -1 > git-log.txt
 diff -u - git-log.txt <<-EOF
 	pram@example.com
 	PRam test
-	2000-01-01T00:00:00+00:00
+	2000-01-01T00:00:00Z
 	A trivial patch
 
 	Bug: https://bugs.gentoo.org/314152

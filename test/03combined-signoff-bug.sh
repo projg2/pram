@@ -52,7 +52,7 @@ diff -u - git-log.txt <<-EOF
 	Other person
 	pram@example.com
 	PRam test
-	2000-01-01T00:00:00+00:00
+	2000-01-01T00:00:00Z
 	A trivial patch
 
 	Signed-off-by: Other person <other@example.com>
