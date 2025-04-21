@@ -36,6 +36,12 @@ print_help() {
 	echo "                   GitHub repo to use (default: gentoo/gentoo)"
 	echo "  -s, --signoff    Add Signed-off-by to commits (the default)"
 	echo "  -S, --no-signoff Disable adding Signed-off-by to commits"
+	echo "  -p, --part-of    Add Part-of to commits, linking to the PR (the default)"
+	echo "  -P, --no-part-of Disable adding Part-of to commits"
+	echo "  --link-to PULL_REQUEST"
+	echo "                   Override the pull request the merge is linked to. This"
+	echo "                   will override the Part-of trailer, as well as the final"
+	echo "                   Closes trailer."
 	echo
 	echo "Parameters:"
 	echo "  <pr-number>      GitHub PR number"
@@ -44,7 +50,7 @@ print_help() {
 	echo
 	echo "Some options can be specified via 'git config' as well:"
 	echo "  string options: pram.editor, pram.repo"
-	echo "  boolean options: pram.gpgsign, pram.interactive, pram.signoff"
+	echo "  boolean options: pram.gpgsign, pram.interactive, pram.signoff, pram.partof"
 }
 
 # add_trailer <file> <line-to-add>
@@ -70,6 +76,8 @@ main() {
 	local interactive=def
 	local gitconfig=1
 	local gpgsign=def
+	local partof=def
+	local link_to=
 
 	while [[ ${#} -gt 0 ]]; do
 		case ${1} in
@@ -149,6 +157,22 @@ main() {
 			-S|--no-signoff)
 				signoff=
 				;;
+			-p|--part-of)
+				partof=1
+				;;
+			-P|--no-part-of)
+				partof=
+				;;
+			--link-to)
+				[[ -z ${link_to} ]] || die "${0}: cannot specify multiple ${1}"
+				[[ ${#} -gt 1 ]] || die "${0}: missing argument to ${1}"
+				link_to=${2}
+				shift
+				;;
+			--link-to=*)
+				[[ -z ${link_to} ]] || die "${0}: cannot specify multiple ${1%%=*}"
+				link_to=${1#*=}
+				;;
 			-*)
 				print_usage >&2
 				exit 1
@@ -199,6 +223,11 @@ main() {
 			[[ ${opt} == true ]] && gpgsign=1
 			[[ ${opt} == false ]] && gpgsign=
 		fi
+		if [[ ${partof} == def ]]; then
+			opt=$(git config --type bool --get pram.partof)
+			[[ ${opt} == true ]] && partof=1
+			[[ ${opt} == false ]] && partof=
+		fi
 	fi
 
 	# set defaults
@@ -232,6 +261,14 @@ main() {
 			;;
 		*)
 			# a local file maybe?
+			if [[ -z ${link_to} ]]; then
+				# only add partof for local files if explicitly asked for
+				if [[ ${partof} == def ]]; then
+					partof=
+				elif [[ ${partof} ]]; then
+					die "specifying --link-to is mandatory with local files when using --part-of"
+				fi
+			fi
 			to_close=
 			[[ -f ${pr} ]] ||
 				die "Parameter neither an URL, number or file: ${pr}"
@@ -245,12 +282,34 @@ main() {
 	git mailsplit --keep-cr -o"${tempdir}" "${tempdir}/all.patch" >/dev/null ||
 		die "Splitting patches failed"
 
+	if [[ ${partof} && -n ${link_to} ]]; then
+		case ${link_to} in
+			*://*)
+				# already fine
+				to_close=${link_to}
+				;;
+			[0-9]*)
+				to_close="https://github.com/${repo}/pull/${link_to}"
+				;;
+			*)
+				die "Unknown format for linked pull request: ${link_to}"
+				;;
+		esac
+
+	fi
+
 	local patches=( "${tempdir}"/[0-9]* )
-	if [[ ${signoff} ]]; then
+	if [[ ${signoff} || ${partof} ]]; then
 		local f
 		for f in "${patches[@]}"; do
-			if ! grep -q '^Signed-off-by:' "${f}"; then
-				die "Commit no. ${f##*/} was not signed off by the author!"
+			if [[ ${signoff} ]]; then
+				if ! grep -q '^Signed-off-by:' "${f}"; then
+					die "Commit no. ${f##*/} was not signed off by the author!"
+				fi
+			fi
+
+			if [[ ${partof} ]]; then
+				add_trailer "${f}" "Part-of: ${to_close}"
 			fi
 		done
 	fi
