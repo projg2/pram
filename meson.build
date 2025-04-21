@@ -12,6 +12,7 @@ sh = find_program('sh')
 tests = [
   '00basic',
   '01signoff-missing',
+  '01signoff-partial',
   '01signoff-present',
   '02bug-number',
   '02bug-url',
