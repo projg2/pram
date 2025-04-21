@@ -155,10 +155,11 @@ main() {
 				;;
 			*)
 				if [[ -n ${pr} ]]; then
+					echo "${0}: only a single PR/patch can be specified" >&2
 					print_usage >&2
 					exit 1
 				fi
-				pr="${1}"
+				pr=${1}
 				;;
 		esac
 
@@ -207,7 +208,7 @@ main() {
 	tempdir=$(mktemp -d) || die "Unable to create a temporary directory"
 	trap 'rm -r -f "${tempdir}"' EXIT
 
-	local pr to_close
+	local to_close
 	case ${pr} in
 		*://github.com/*/*/pull/*)
 			# GitHub URL
