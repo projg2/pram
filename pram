@@ -248,7 +248,7 @@ main() {
 	local patches=( "${tempdir}"/[0-9]* )
 	if [[ ${signoff} ]]; then
 		local f
-		for f in "${patches}"; do
+		for f in "${patches[@]}"; do
 			if ! grep -q '^Signed-off-by:' "${f}"; then
 				die "Commit no. ${f##*/} was not signed off by the author!"
 			fi
