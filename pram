@@ -37,6 +37,9 @@ print_help() {
 	echo "  -s, --signoff    Add Signed-off-by to commits (the default)"
 	echo "  -S, --no-signoff Disable adding Signed-off-by to commits"
 	echo "  -p, --part-of    Add Part-of to commits, linking to the PR (the default)"
+	echo "  --part-of-pr PULL_REQUEST"
+	echo "                   Override the pull request to link with -p/--part-of."
+	echo "                   Implies -p"
 	echo "  -P, --no-part-of Disable adding Part-of to commits"
 	echo
 	echo "Parameters:"
@@ -46,7 +49,7 @@ print_help() {
 	echo
 	echo "Some options can be specified via 'git config' as well:"
 	echo "  string options: pram.editor, pram.repo"
-	echo "  boolean options: pram.gpgsign, pram.interactive, pram.signoff"
+	echo "  boolean options: pram.gpgsign, pram.interactive, pram.signoff, pram.partof"
 }
 
 # add_trailer <file> <line-to-add>
@@ -73,6 +76,7 @@ main() {
 	local gitconfig=1
 	local gpgsign=def
 	local partof=def
+	local user_pr=
 
 	while [[ ${#} -gt 0 ]]; do
 		case ${1} in
@@ -155,6 +159,18 @@ main() {
 			-p|--part-of)
 				partof=1
 				;;
+			--part-of-pr)
+				partof=1
+				[[ -z ${user_pr} ]] || die "${0}: cannot specify multiple ${1}"
+				[[ ${#} -gt 1 ]] || die "${0}: missing argument to ${1}"
+				user_pr=${2}
+				shift
+				;;
+			--part-of-pr=*)
+				partof=1
+				[[ -z ${user_pr} ]] || die "${0}: cannot specify multiple ${1%%=*}"
+				user_pr=${1#*=}
+				;;
 			-P|--no-part-of)
 				partof=
 				;;
@@ -217,12 +233,13 @@ main() {
 	tempdir=$(mktemp -d) || die "Unable to create a temporary directory"
 	trap 'rm -r -f "${tempdir}"' EXIT
 
-	local pr to_close
+	local pr to_close linked_pr
 	for pr in "${prs[@]}"; do
 		case ${pr} in
 			*://github.com/*/*/pull/*)
 				# GitHub URL
 				to_close=${pr%.patch}
+				linked_pr=${to_close}
 				pr=${to_close}.patch
 				;;
 			*://*.bugs.gentoo.org/attachment.cgi?*)
@@ -230,18 +247,22 @@ main() {
 				# (get bug no from domain name)
 				to_close=${pr%%.bugs*}
 				to_close="https://bugs.gentoo.org/${to_close#*://}"
+				linked_pr=${to_close}
 				;;
 			*://*)
 				# arbitrary URL
 				to_close=
+				linked_pr=${pr}
 				;;
 			[0-9]*)
 				# a number?
 				to_close="https://github.com/${repo}/pull/${pr}"
+				linked_pr=${to_close}
 				pr=${to_close}.patch
 				;;
 			*)
 				# a local file maybe?
+				[[ ! ${partof} || -n ${user_pr} ]] || die "--part-of-pr is mandatory with local files with --part-of"
 				to_close=
 				[[ -f ${pr} ]] ||
 					die "Parameter neither an URL, number or file: ${pr}"
@@ -254,9 +275,24 @@ main() {
 		fi
 		git mailsplit --keep-cr -o"${tempdir}" "${tempdir}/all.patch" >/dev/null ||
 			die "Splitting patches failed"
+		
+		if [[ ${partof} && -n ${user_pr} ]]; then
+			case ${user_pr} in
+				*://*)
+					# already fine
+					linked_pr=${user_pr}
+					;;
+				[0-9]*)
+					linked_pr="https://github.com/${repo}/pull/${user_pr}"
+					;;
+				*)
+					die "Unknown format for linked pull request: ${user_pr}"
+					;;
+			esac
+		fi
 
 		local patches=( "${tempdir}"/[0-9]* )
-		if [[ ${signoff} ]] || [[ ${partof} ]]; then
+		if [[ ${signoff} || ${partof} ]]; then
 			local f
 			for f in "${patches[@]}"; do
 				if [[ ${signoff} ]]; then
@@ -266,7 +302,7 @@ main() {
 				fi
 
 				if [[ ${partof} ]]; then
-					add_trailer "${f}" "Part-of: ${to_close}"
+					add_trailer "${f}" "Part-of: ${linked_pr}"
 				fi
 			done
 		fi

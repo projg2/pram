@@ -39,11 +39,15 @@ Add Signed-off-by to commits (the default)
 .TP
 \fB-S\fR, \fB\-\-no\-signoff\fR
 Disable adding Signed-off-by to commits
+.TP
 \fB\-p\fR, \fB\-\-part-of\fR
 Add Part-of to commits, linking to the PR (the default)
 .TP
 \fB-P\fR, \fB\-\-no\-part-of\fR
 Disable adding Part-of to commits
+.TP
+\fB\-\-part-of-pr \fIPULL_REQUEST\fR
+Override the pull request to link with -p/--part-of. Implies -p
 
 .SH PARAMETERS
 .IP \fI<pr-number>\fP
