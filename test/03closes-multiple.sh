@@ -43,7 +43,7 @@ cat > trivial.patch <<-EOF
 	2.21.0
 EOF
 
-bash "${INITDIR}"/../pram --no-gitconfig -e true -G -I -S -c 314152 -c 314156 -c 314154 ./trivial.patch
+bash "${INITDIR}"/../pram --no-gitconfig -e true -G -I -S -c 314152 -c 314156 -c 314154 -P ./trivial.patch
 
 git log --format='%ae%n%an%n%aI%n%B' -1 > git-log.txt
 diff -u - git-log.txt <<-EOF

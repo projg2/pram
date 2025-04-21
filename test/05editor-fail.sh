@@ -44,6 +44,6 @@ cat > trivial.patch <<-EOF
 EOF
 
 BEFORE=$(git rev-parse HEAD)
-! bash "${INITDIR}"/../pram --no-gitconfig -e false -G -I -S ./trivial.patch
+! bash "${INITDIR}"/../pram --no-gitconfig -e false -G -I -S -P ./trivial.patch
 
 [ "${BEFORE}" = "$(git rev-parse HEAD)" ]

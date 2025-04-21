@@ -43,7 +43,7 @@ cat > trivial.patch <<-EOF
 	2.21.0
 EOF
 
-! bash "${INITDIR}"/../pram --no-gitconfig -e true -G -I -s ./trivial.patch 2> out.txt
+! bash "${INITDIR}"/../pram --no-gitconfig -e true -G -I -s -P ./trivial.patch 2> out.txt
 
 diff -u - out.txt <<-EOF
 	Commit no. 0001 was not signed off by the author!
