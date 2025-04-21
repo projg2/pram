@@ -1,5 +1,5 @@
 #!/bin/sh
-# Test whether a set of commits where only one is missing causes rejection.
+# Test whether the Part-of trailer is correctly added to every commit.
 
 set -e -x
 
@@ -7,11 +7,9 @@ set -e -x
 
 cat > three-commits.patch <<-EOF
 	From 243f5779c2ae9b0d117829b60fe7dbc466e968c0 Mon Sep 17 00:00:00 2001
-	From: Other person <other@example.com>
+	From: PRam test <pram@example.com>
 	Date: Sat, 1 Jan 2000 00:00:00 +0000
 	Subject: [PATCH 1/3] First patch
-
-	Signed-off-by: Other person <other@example.com>
 
 	---
 	 data.txt | 2 +-
@@ -33,7 +31,7 @@ cat > three-commits.patch <<-EOF
 	2.49.0
 
 	From 7aab19414dd17546985fd7c0091e779944e8f0df Mon Sep 17 00:00:00 2001
-	From: Other person <other@example.com>
+	From: PRam test <pram@example.com>
 	Date: Sat, 1 Jan 2000 00:00:00 +0000
 	Subject: [PATCH 2/3] Second patch
 
@@ -58,11 +56,9 @@ cat > three-commits.patch <<-EOF
 	2.49.0
 
 	From 8be43d8aa258fd2c2cf25ec540d19ab6a25d4038 Mon Sep 17 00:00:00 2001
-	From: Other person <other@example.com>
+	From: PRam test <pram@example.com>
 	Date: Sat, 1 Jan 2000 00:00:00 +0000
 	Subject: [PATCH 3/3] Third patch
-
-	Signed-off-by: Other person <other@example.com>
 
 	---
 	 data.txt | 2 +-
@@ -84,8 +80,34 @@ cat > three-commits.patch <<-EOF
 	2.49.0
 EOF
 
-! bash "${INITDIR}"/../pram --no-gitconfig -e true -G -I -s -P ./three-commits.patch 2> out.txt
+# We use `--link-to 123` in a couple other tests, but there's another way we should test
+bash "${INITDIR}"/../pram --no-gitconfig -e true -G -I -S --link-to https://github.com/gentoo/gentoo/pull/123 ./three-commits.patch
 
-diff -u - out.txt <<-EOF
-	Commit no. 0002 was not signed off by the author!
+git log --format='%ae%n%an%n%aI%n%B' -3 > git-log.txt
+diff -u - git-log.txt <<-EOF
+	pram@example.com
+	PRam test
+	2000-01-01T00:00:00Z
+	Third patch
+
+	Part-of: https://github.com/gentoo/gentoo/pull/123
+	Closes: https://github.com/gentoo/gentoo/pull/123
+
+	pram@example.com
+	PRam test
+	2000-01-01T00:00:00Z
+	Second patch
+
+	Part-of: https://github.com/gentoo/gentoo/pull/123
+
+	pram@example.com
+	PRam test
+	2000-01-01T00:00:00Z
+	First patch
+
+	Part-of: https://github.com/gentoo/gentoo/pull/123
+
+EOF
+sha256sum -c <<-EOF
+	c95bc3022ee967e117fc7841d9b6597e672d7ef1da7897b2c2692fe8b099911d  data.txt
 EOF

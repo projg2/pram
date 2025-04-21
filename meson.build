@@ -29,6 +29,8 @@ tests = [
   '06gpgsign',
   '10threeway',
   '10threeway-disabled',
+  '11combined-partof-signoff-bug',
+  '11partof',
 ]
 
 foreach t : tests
