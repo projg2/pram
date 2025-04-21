@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# (c) 2019-2024 Michał Górny
+# (c) 2019-2025 Michał Górny
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 VERSION=11
@@ -10,13 +10,13 @@ die() {
 }
 
 print_usage() {
-	echo "Usage: ${0} [<options>] <pr-number|pr-url|patch-url>..."
+	echo "Usage: ${0} [<options>] <pr-number|pr-url|patch-url>"
 }
 
 print_help() {
 	print_usage
 	echo
-	echo "Merge specified GitHub PR(s) into the repository in current directory."
+	echo "Merge specified GitHub PR into the repository in current directory."
 	echo
 	echo "Options:"
 	echo "  --am-options OPTIONS"
@@ -64,7 +64,7 @@ main() {
 	local bug=()
 	local closes=()
 	local editor=
-	local prs=()
+	local pr=
 	local repo=
 	local signoff=def
 	local interactive=def
@@ -154,14 +154,19 @@ main() {
 				exit 1
 				;;
 			*)
-				prs+=( "${1}" )
+				if [[ -n ${pr} ]]; then
+					echo "${0}: only a single PR/patch can be specified" >&2
+					print_usage >&2
+					exit 1
+				fi
+				pr=${1}
 				;;
 		esac
 
 		shift
 	done
 
-	if [[ -z ${prs[@]} ]]; then
+	if [[ -z ${pr} ]]; then
 		print_usage >&2
 		exit 1
 	fi
@@ -203,107 +208,101 @@ main() {
 	tempdir=$(mktemp -d) || die "Unable to create a temporary directory"
 	trap 'rm -r -f "${tempdir}"' EXIT
 
-	local pr to_close
-	for pr in "${prs[@]}"; do
-		case ${pr} in
-			*://github.com/*/*/pull/*)
-				# GitHub URL
-				to_close=${pr%.patch}
-				pr=${to_close}.patch
-				;;
-			*://*.bugs.gentoo.org/attachment.cgi?*)
-				# Gentoo Bugzilla attachment
-				# (get bug no from domain name)
-				to_close=${pr%%.bugs*}
-				to_close="https://bugs.gentoo.org/${to_close#*://}"
-				;;
-			*://*)
-				# arbitrary URL
-				to_close=
-				;;
-			[0-9]*)
-				# a number?
-				to_close="https://github.com/${repo}/pull/${pr}"
-				pr=${to_close}.patch
-				;;
-			*)
-				# a local file maybe?
-				to_close=
-				[[ -f ${pr} ]] ||
-					die "Parameter neither an URL, number or file: ${pr}"
-				cp "${pr}" "${tempdir}"/all.patch || die "Copying patch failed"
-				pr=
-				;;
-		esac
-		if [[ -n ${pr} ]]; then
-			wget -O "${tempdir}/all.patch" "${pr}" || die "Fetching patch failed"
-		fi
-		git mailsplit --keep-cr -o"${tempdir}" "${tempdir}/all.patch" >/dev/null ||
-			die "Splitting patches failed"
+	local to_close
+	case ${pr} in
+		*://github.com/*/*/pull/*)
+			# GitHub URL
+			to_close=${pr%.patch}
+			pr=${to_close}.patch
+			;;
+		*://*.bugs.gentoo.org/attachment.cgi?*)
+			# Gentoo Bugzilla attachment
+			# (get bug no from domain name)
+			to_close=${pr%%.bugs*}
+			to_close="https://bugs.gentoo.org/${to_close#*://}"
+			;;
+		*://*)
+			# arbitrary URL
+			to_close=
+			;;
+		[0-9]*)
+			# a number?
+			to_close="https://github.com/${repo}/pull/${pr}"
+			pr=${to_close}.patch
+			;;
+		*)
+			# a local file maybe?
+			to_close=
+			[[ -f ${pr} ]] ||
+				die "Parameter neither an URL, number or file: ${pr}"
+			cp "${pr}" "${tempdir}"/all.patch || die "Copying patch failed"
+			pr=
+			;;
+	esac
+	if [[ -n ${pr} ]]; then
+		wget -O "${tempdir}/all.patch" "${pr}" || die "Fetching patch failed"
+	fi
+	git mailsplit --keep-cr -o"${tempdir}" "${tempdir}/all.patch" >/dev/null ||
+		die "Splitting patches failed"
 
-		local patches=( "${tempdir}"/[0-9]* )
-		if [[ ${signoff} ]]; then
-			local f
-			for f in "${patches}"; do
-				if ! grep -q '^Signed-off-by:' "${f}"; then
-					die "Commit no. ${f##*/} was not signed off by the author!"
-				fi
-			done
-		fi
-
-		# append bug references
-		local b
-		for b in "${bug[@]}"; do
-			[[ ${b} != *://* ]] && b=https://bugs.gentoo.org/${b}
-			add_trailer "${patches[-1]}" "Bug: ${b}"
-		done
-		for b in "${closes[@]}"; do
-			[[ ${b} != *://* ]] && b=https://bugs.gentoo.org/${b}
-			add_trailer "${patches[-1]}" "Closes: ${b}"
-		done
-		# append Closes: to the final commit if missing
-		if [[ -n ${to_close} ]]; then
-			if ! grep -q "^Closes: ${to_close}" "${patches[-1]}"; then
-				add_trailer "${patches[-1]}" "Closes: ${to_close}"
+	local patches=( "${tempdir}"/[0-9]* )
+	if [[ ${signoff} ]]; then
+		local f
+		for f in "${patches}"; do
+			if ! grep -q '^Signed-off-by:' "${f}"; then
+				die "Commit no. ${f##*/} was not signed off by the author!"
 			fi
-		fi
+		done
+	fi
 
-		# concatenate the patches back
-		cat "${patches[@]}" > "${tempdir}/all.patch" ||
-			die "Concatenating patches failed"
-		rm "${patches[@]}" || die "Split patch cleanup failed"
-
-		${editor} "${tempdir}/all.patch" || die "Starting editor failed"
-
-		if [[ ! -s ${tempdir}/all.patch ]]; then
-			echo "Patch is empty now, skipping." >&2
-			continue
-		fi
-
-		if [[ ${interactive} ]]; then
-			while :; do
-				local answer
-				read -p "Do you want to merge this? (Y/n/q) " answer
-				case ${answer,,} in
-					y|"")
-						break
-						;;
-					q)
-						return 0
-						;;
-					n)
-						echo "This merge has been skipped!"
-						continue 2
-						;;
-					*)
-						echo "Unknown answer."
-						;;
-				esac
-			done
-		fi
-		git am --keep-cr -3 ${signoff:+-s} ${gpgsign:+-S} "${am_options[@]}" \
-			"${tempdir}/all.patch" || die "git am failed"
+	# append bug references
+	local b
+	for b in "${bug[@]}"; do
+		[[ ${b} != *://* ]] && b=https://bugs.gentoo.org/${b}
+		add_trailer "${patches[-1]}" "Bug: ${b}"
 	done
+	for b in "${closes[@]}"; do
+		[[ ${b} != *://* ]] && b=https://bugs.gentoo.org/${b}
+		add_trailer "${patches[-1]}" "Closes: ${b}"
+	done
+	# append Closes: to the final commit if missing
+	if [[ -n ${to_close} ]]; then
+		if ! grep -q "^Closes: ${to_close}" "${patches[-1]}"; then
+			add_trailer "${patches[-1]}" "Closes: ${to_close}"
+		fi
+	fi
+
+	# concatenate the patches back
+	cat "${patches[@]}" > "${tempdir}/all.patch" ||
+		die "Concatenating patches failed"
+	rm "${patches[@]}" || die "Split patch cleanup failed"
+
+	${editor} "${tempdir}/all.patch" || die "Starting editor failed"
+
+	if [[ ! -s ${tempdir}/all.patch ]]; then
+		echo "Patch is empty now, nothing to do." >&2
+		return 0
+	fi
+
+	if [[ ${interactive} ]]; then
+		while :; do
+			local answer
+			read -p "Do you want to merge this? (Y/n/q) " answer
+			case ${answer,,} in
+				y|"")
+					break
+					;;
+				q|n)
+					return 0
+					;;
+				*)
+					echo "Unknown answer."
+					;;
+			esac
+		done
+	fi
+	git am --keep-cr -3 ${signoff:+-s} ${gpgsign:+-S} "${am_options[@]}" \
+			"${tempdir}/all.patch" || die "git am failed"
 }
 
 main "${@}"
