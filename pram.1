@@ -39,6 +39,11 @@ Add Signed-off-by to commits (the default)
 .TP
 \fB-S\fR, \fB\-\-no\-signoff\fR
 Disable adding Signed-off-by to commits
+\fB\-p\fR, \fB\-\-part-of\fR
+Add Part-of to commits, linking to the PR (the default)
+.TP
+\fB-P\fR, \fB\-\-no\-part-of\fR
+Disable adding Part-of to commits
 
 .SH PARAMETERS
 .IP \fI<pr-number>\fP
@@ -57,10 +62,10 @@ files.
 The following options are currently supported:
 .TP
 string options:
-\fIpram.editor\fR, \fIpram.repository\fR
+\fIpram.editor\fR, \fIpram.repo\fR
 .TP
 boolean options (\fB--type bool\fR):
-\fIpram.gpgsign\fR, \fIpram.interactive\fR, \fIpram.signoff\fR
+\fIpram.gpgsign\fR, \fIpram.interactive\fR, \fIpram.signoff\fR, \fIpram.partof\fR
 
 .SH LICENSE
 This program is free software; you can redistribute it and/or modify

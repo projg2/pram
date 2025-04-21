@@ -36,6 +36,8 @@ print_help() {
 	echo "                   GitHub repo to use (default: gentoo/gentoo)"
 	echo "  -s, --signoff    Add Signed-off-by to commits (the default)"
 	echo "  -S, --no-signoff Disable adding Signed-off-by to commits"
+	echo "  -p, --part-of    Add Part-of to commits, linking to the PR (the default)"
+	echo "  -P, --no-part-of Disable adding Part-of to commits"
 	echo
 	echo "Parameters:"
 	echo "  <pr-number>      GitHub PR number"
@@ -70,6 +72,7 @@ main() {
 	local interactive=def
 	local gitconfig=1
 	local gpgsign=def
+	local partof=def
 
 	while [[ ${#} -gt 0 ]]; do
 		case ${1} in
@@ -149,6 +152,12 @@ main() {
 			-S|--no-signoff)
 				signoff=
 				;;
+			-p|--part-of)
+				partof=1
+				;;
+			-P|--no-part-of)
+				partof=
+				;;
 			-*)
 				print_usage >&2
 				exit 1
@@ -193,6 +202,11 @@ main() {
 			opt=$(git config --type bool --get pram.gpgsign)
 			[[ ${opt} == true ]] && gpgsign=1
 			[[ ${opt} == false ]] && gpgsign=
+		fi
+		if [[ ${partof} == def ]]; then
+			opt=$(git config --type bool --get pram.partof)
+			[[ ${opt} == true ]] && partof=1
+			[[ ${opt} == false ]] && partof=
 		fi
 	fi
 
@@ -242,11 +256,17 @@ main() {
 			die "Splitting patches failed"
 
 		local patches=( "${tempdir}"/[0-9]* )
-		if [[ ${signoff} ]]; then
+		if [[ ${signoff} ]] || [[ ${partof} ]]; then
 			local f
-			for f in "${patches}"; do
-				if ! grep -q '^Signed-off-by:' "${f}"; then
-					die "Commit no. ${f##*/} was not signed off by the author!"
+			for f in "${patches[@]}"; do
+				if [[ ${signoff} ]]; then
+					if ! grep -q '^Signed-off-by:' "${f}"; then
+						die "Commit no. ${f##*/} was not signed off by the author!"
+					fi
+				fi
+
+				if [[ ${partof} ]]; then
+					add_trailer "${f}" "Part-of: ${to_close}"
 				fi
 			done
 		fi
