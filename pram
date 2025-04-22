@@ -261,13 +261,14 @@ main() {
 			;;
 		*)
 			# a local file maybe?
-			if [[ ${partof} == def && -z ${link_to} ]]; then
+			if [[ -z ${link_to} ]]; then
 				# only add partof for local files if explicitly asked for
-				partof=
+				if [[ ${partof} == def ]]; then
+					partof=
+				elif [[ ${partof} ]]; then
+					die "specifying --link-to is mandatory with local files when using --part-of"
+				fi
 			fi
-			[[ ! ${partof} || -n ${link_to} ]] ||
-				die "specifying --link-to is mandatory with local files when using --part-of"
-
 			to_close=
 			[[ -f ${pr} ]] ||
 				die "Parameter neither an URL, number or file: ${pr}"
