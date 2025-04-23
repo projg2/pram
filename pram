@@ -244,6 +244,13 @@ main() {
 			to_close=${pr%.patch}
 			pr=${to_close}.patch
 			;;
+		*://github.com/*/*/compare/*)
+			# GitHub branch/commit diff
+			if [[ "${pr}" != *.patch ]]; then
+				pr=${pr}.patch
+			fi
+			to_close=
+			;;
 		*://*.bugs.gentoo.org/attachment.cgi?*)
 			# Gentoo Bugzilla attachment
 			# (get bug no from domain name)
