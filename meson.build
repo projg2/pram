@@ -1,5 +1,5 @@
 project('pram',
-  version: '11',
+  version: '12',
   license: 'GPL-2.0-or-later',
   meson_version: '>=0.49.0')
 
