@@ -268,14 +268,6 @@ main() {
 			;;
 		*)
 			# a local file maybe?
-			if [[ -z ${link_to} ]]; then
-				# only add partof for local files if explicitly asked for
-				if [[ ${partof} == def ]]; then
-					partof=
-				elif [[ ${partof} ]]; then
-					die "specifying --link-to is mandatory with local files when using --part-of"
-				fi
-			fi
 			to_close=
 			[[ -f ${pr} ]] ||
 				die "Parameter neither an URL, number or file: ${pr}"
@@ -283,6 +275,16 @@ main() {
 			pr=
 			;;
 	esac
+
+	if [[ -z ${to_close} && -z ${link_to} ]]; then
+		# only add partof for local files and arbitrary URLs if explicitly asked for
+		if [[ ${partof} == def ]]; then
+			partof=
+		elif [[ ${partof} ]]; then
+			die "could not determine a PR from supplied patch, please specify with --link-to"
+		fi
+	fi
+
 	if [[ -n ${pr} ]]; then
 		wget -O "${tempdir}/all.patch" "${pr}" || die "Fetching patch failed"
 	fi
