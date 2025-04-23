@@ -1,7 +1,7 @@
-FROM archlinux/base
+FROM alpine
 WORKDIR /pram/build
 COPY . /pram
-RUN ["pacman", "--noconfirm", "-Sy", "cmake", "diffutils", "git", "ninja"]
-RUN ["cmake", "..", "-G", "Ninja"]
-RUN ["ctest", "-j", "$(nproc)"]
-CMD ["bash", "/pram/pram"]
+RUN ["apk", "add", "bash", "diffutils", "git", "meson", "ninja"]
+RUN ["meson", ".."]
+RUN ["ninja"]
+CMD ["ninja", "test"]
