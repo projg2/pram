@@ -27,6 +27,8 @@ print_help() {
 	echo "                   a bug number or URL, can be specified multiple times"
 	echo "  -e EDITOR, --editor EDITOR"
 	echo "                   Override the editor used (default: \${EDITOR})"
+	echo "  --no-api         Don't use the GitHub REST API even if a personal"
+	echo "                   access token is present at ~/.github-token"
 	echo "  --no-gitconfig   Do not query options via git config"
 	echo "  -G, --no-gpgsign"
 	echo "                   Do not automatically GPG-sign commits"
@@ -67,6 +69,7 @@ main() {
 	local -x LC_COLLATE=C
 
 	local am_options=()
+	local api=
 	local bug=()
 	local closes=()
 	local editor=
@@ -78,6 +81,10 @@ main() {
 	local gpgsign=def
 	local partof=def
 	local link_to=
+
+	if [[ -r ~/.github-token ]]; then
+		api=1
+	fi
 
 	while [[ ${#} -gt 0 ]]; do
 		case ${1} in
@@ -130,6 +137,9 @@ main() {
 				;;
 			--editor=*)
 				editor=${1#*=}
+				;;
+			--no-api)
+				api=
 				;;
 			--no-gitconfig)
 				gitconfig=
@@ -286,7 +296,24 @@ main() {
 	fi
 
 	if [[ -n ${pr} ]]; then
-		wget -O "${tempdir}/all.patch" "${pr}" || die "Fetching patch failed"
+		if [[ -n ${api} && (
+			${pr} == *://github.com/*/commit/* ||
+			${pr} == *://github.com/*/compare/* ||
+			${pr} == *://github.com/*/pull/* )
+		]]; then
+			# Modify possible patch links to be applicable to the GitHub REST API
+			# https://docs.github.com/en/rest?apiVersion=2022-11-28
+			pr=${pr/github.com/api.github.com\/repos}
+			pr=${pr/\/commit\//\/commits\/}
+			pr=${pr/\/pull\//\/pulls\/}
+			pr=${pr%%.patch}
+			wget --header="Authorization: Bearer $(< ~/.github-token)" \
+				--header="Accept: application/vnd.github.patch" \
+				--header="X-GitHub-Api-Version: 2022-11-28" \
+				-O "${tempdir}/all.patch" "${pr}" || die "Fetching patch failed"
+		else
+			wget -O "${tempdir}/all.patch" "${pr}" || die "Fetching patch failed"
+		fi
 	fi
 	git mailsplit --keep-cr -o"${tempdir}" "${tempdir}/all.patch" >/dev/null ||
 		die "Splitting patches failed"
