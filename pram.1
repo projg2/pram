@@ -25,6 +25,9 @@ Override the editor used (default: ${EDITOR})
 \fB\-\-no\-gitconfig\fR
 Do not query options via git config.
 .TP
+\fB\-\-no\-api\fR
+Don't use the GitHub REST API even if a personal access token is present at \fB~/.github-token\fR.
+.TP
 \fB\-G\fR, \fB\-\-no\-gpgsign\fR
 Do not automatically GPG-sign commits
 .TP
@@ -71,6 +74,13 @@ string options:
 .TP
 boolean options (\fB--type bool\fR):
 \fIpram.gpgsign\fR, \fIpram.interactive\fR, \fIpram.signoff\fR
+
+.SH GITHUB REST API SUPPORT
+PRam will use the GitHub REST API if a token is present at \fB~/.github-token\fR.
+
+.UR https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+See GitHub documentation on how to create one
+.UE .
 
 .SH LICENSE
 This program is free software; you can redistribute it and/or modify
