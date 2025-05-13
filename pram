@@ -254,7 +254,7 @@ main() {
 			to_close=${pr%.patch}
 			pr=${to_close}.patch
 			;;
-		*://github.com/*/*/compare/*)
+		*://github.com/*/*/commit/*|*://github.com/*/*/compare/*)
 			# GitHub branch/commit diff
 			if [[ "${pr}" != *.patch ]]; then
 				pr=${pr}.patch
