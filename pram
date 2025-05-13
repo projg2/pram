@@ -249,6 +249,12 @@ main() {
 
 	local to_close
 	case ${pr} in
+		*://github.com/*/*/pull/*/commits/*)
+			# Simplify for easier use via the api
+			pr=${pr/pull\/*\/commits/commit}
+			pr=${pr%.patch}.patch
+			to_close=
+			;;
 		*://github.com/*/*/pull/*)
 			# GitHub URL
 			to_close=${pr%.patch}
@@ -256,9 +262,7 @@ main() {
 			;;
 		*://github.com/*/*/commit/*|*://github.com/*/*/compare/*)
 			# GitHub branch/commit diff
-			if [[ "${pr}" != *.patch ]]; then
-				pr=${pr}.patch
-			fi
+			pr=${pr%.patch}.patch
 			to_close=
 			;;
 		*://*.bugs.gentoo.org/attachment.cgi?*)
