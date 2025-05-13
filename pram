@@ -249,6 +249,14 @@ main() {
 
 	local to_close
 	case ${pr} in
+		*://github.com/*/*/pull/*/commits/*)
+			# Simplify for easier use via the api
+			pr=${pr/pull\/*\/commits/commit}
+			if [[ "${pr}" != *.patch ]]; then
+				pr=${pr}.patch
+			fi
+			to_close=
+			;;
 		*://github.com/*/*/pull/*)
 			# GitHub URL
 			to_close=${pr%.patch}
